@@ -5,3 +5,12 @@ input, button { width: 100%; padding: 8px; box-sizing: border-box; }
 button { margin-top: 20px; background: #1F2328; color: white; border: none; border-radius: 8px; }
 .errore { border: 2px solid #B32D2D; }
 .msg-errore { color: #B32D2D; font-size: 13px; margin: 4px 0 0; }
+
+/* Stile della card del risultato */
+.risultato {
+    width: 300px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}
