@@ -129,6 +129,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 ?>
 
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="it">
 
@@ -219,7 +229,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <p>Prezzo iniziale:
                 € <?php echo number_format($prezzo, 2, ",", "."); ?>    <!-- Serve a formattare un numero 
-                                                                        number_format(numero, decimali, separatore_decimale, separatore_migliaia) -->
+                                                                        number_format(numero, cifre_decimali, separatore_decimale, separatore_migliaia) -->
             </p>
 
             <p>Risparmio:
@@ -230,7 +240,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 € <?php echo number_format($prezzoFinale, 2, ",", "."); ?>
             </p>
 
-            <h3><?php echo $fascia; ?></h3>
+            <h3><?php echo $fascia; ?></h3>     <!-- Mostra la fascia dello sconto: PICCOLO, BUONO, SUPER -->
 
         </div>
 
@@ -238,6 +248,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     ?>
+
 
     <!-- Visualizzazione dello storico -->
     <h2>Storico dei calcoli</h2>
@@ -248,9 +259,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (file_exists("log.csv")) {
 
         // Apertura del file in lettura
-        $file = fopen("log.csv", "r");
+        $file = fopen("log.csv", "r");      // "R" apre il file per leggerlo
 
         echo "<table border='1' style='margin: 20px auto; border-collapse: collapse;'>";
+        // margin: 20px auto --> centra la tabella e aggiunge un margine.
+        // border-collapse: collapse --> unisce i bordi delle celle.
 
         echo "<tr>
                 <th>Prodotto</th>
@@ -259,11 +272,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <th>Fascia</th>
               </tr>";
 
+
         // Lettura delle righe del file
+        // fgetcsv() legge una riga del file CSV e la restituisce sotto forma di array (05/11/2026,Computer,100,20,OK,80,20,BUONO --> $riga[0], $riga[1], ...)
+        // SIGNIFICA: Continua a leggere il file una riga alla volta, finché ci sono righe da leggere
         while (($riga = fgetcsv($file)) != false) {
 
             // Visualizzazione dei soli calcoli riusciti
             if ($riga[0] != "Data" && $riga[4] == "OK") {
+                // $riga[0] != "Data" --> controlla che la riga non sia quella delle intestazioni (Data,Prodotto,Prezzo,Sconto,Esito,...). Quindi questo controllo serve a saltare le intestazioni per mostrare solo i calcoli effettuati (06/11/2026,Computer,100,20,OK,80,20,BUONO,...).
+                //                        senza PHP mostrerebbe anche la prima riga (delle intestazioni) nella tabella dello storico.
+                // $riga[4] == "OK" --> Controlla che il calcolo sia riuscito
+                // SIGNIFICA: Mostra la riga solamente se non contiene le intestazioni e se il calcolo è riuscito.
 
                 echo "<tr>";
 
@@ -283,7 +303,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     } else {
 
-        echo "<p>Nessun calcolo effettuato.</p>";
+        echo "<p>Nessun calcolo effettuato.</p>";   // Se il file non esiste "if (file_exists("log.csv"))", viene mostrato il messaggio scritto.
+        // Si fa perché dobbiamo gestire anche la situazione in cui l'utente apre la pagina per la prima volta e il file log.csv non è ancora stato creato.
 
     }
 
