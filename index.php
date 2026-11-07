@@ -1,3 +1,5 @@
+<!-- PHP - Elaborazione dei dati -->
+<!-- Questa parte si occupa di ricevere i dati, controllarli, elaborarli e salvarli nel file CSV. -->
 
 <?php
 // Inizializzazione Variabili 
@@ -15,7 +17,7 @@ $erroreProdotto = "";   // contiene l'eventuale errore del prodotto
 $errorePrezzo = "";
 $erroreSconto = "";
 
-$risultato = false;     // indica se il calcolo è riuscito
+$esito = "";    // indica se il calcolo è riuscito
 
 
 // Controllo dell'invio del form
@@ -29,9 +31,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Controllo del prodotto
     if ($prodotto == "") {
-        $erroreProdotto = "Inserisci il nome del prodotto";
+        $erroreProdotto = "Prodotto mancante";
     } else if (strlen($prodotto) > 30) {    // strlen() conta il numero di caratteri di una stringa
-        $erroreProdotto = "Il prodotto può avere massimo 30 caratteri";
+        $erroreProdotto = "Prodotto > 30 caratteri";
     }
 
     // Controllo del prezzo
@@ -67,17 +69,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $colore = "#D4EDDA";    // Verde
         }
 
-        $risultato = true;      // permette di mostrare la card del risultato (nel php), quando i dati sono tutti validi
-        $esito = "OK";      // indica che i dati sono corretti
+        $esito = "OK";      // indica che i dati sono corretti, e si usa per mostrare se il calcolo è riuscito o no nel CSV | e permette di mostrare la card del risultato (nel php)
 
 
     } else {    // Questo è il caso in cui almeno uno dei campi contiene un errore
 
         $esito = "KO";      // indica che il calcolo non è riuscito
-        $risparmio = "";    // lascia vuoto il risparmio
+        $risparmio = "";    // lascia vuoto il risparmio perché nel CSV vogliamo salvare i campi relativi ai risultati vuoti
         $prezzoFinale = "";
         $fascia = "";
     }
+
 
 
     // Preparazione del messaggio degli errori
@@ -92,7 +94,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Apertura del file CSV
     $file = fopen("log.csv", "a");      // FORMULA GENERALE: fopen("nomefile", "modalità");
 
-    // Inserimento delle intestazioni se il file è vuoto
+    // Scrittura delle intestazioni se il file è vuoto
     if (filesize("log.csv") == 0) {     // controlla se il file è vuoto, per EVITARE di INSERIRE NUOVAMENTE LE INTESTAZIONI ogni volta che viene effettuato un calcolo
                                         // filesize() restituisce la dimensione di un file in byte ---> Se il risultato è 0, significa che il file è vuoto
 
@@ -112,7 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Salvataggio dei dati nel file CSV
     fputcsv($file, array(
-        date("d/m/Y H:i:s"),    // registra data e ora del calcolo (ES: 05/11/2026 17:30:25)
+        date("d/m/Y H:i:s"),    // registra data e ora del calcolo (ES: 05/11/2026 17:30:25) | si mette SEMPRE
         $prodotto,
         $prezzo,
         $sconto,
@@ -139,6 +141,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
 
+<!-- HTML + PHP (Visualizzazione) -->
+<!-- Questa parte si occupa di mostrare all'utente la pagina web(form) e i risultati dell'elaborazione effettuata nella prima parte(mostrando errori, risultati e storico del CSV) -->
 <!DOCTYPE html>
 <html lang="it">
 
@@ -214,8 +218,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <!-- Visualizzazione del risultato -->
     <?php
 
-    if ($risultato == true) {   // controlla se il calcolo è riuscito.
-                                // Ricordiamo che prima c'era scritto: $risultato = true; --> solamente quando tutti i dati erano validi.
+    if ($esito == "OK") {       // controlla se il calcolo è riuscito.
+                                // Ricordiamo che prima c'era scritto: $esito == "OK"; --> solamente quando tutti i dati erano validi.
                                 // Quindi la card viene mostrata soltanto in caso di successo.
 
     ?>
