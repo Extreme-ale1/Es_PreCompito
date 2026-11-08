@@ -51,6 +51,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Controllo della presenza di errori
     if ($erroreProdotto == "" && $errorePrezzo == "" && $erroreSconto == "") {      // Controlla che tutte e tre le variabili degli errori siano vuote (ovvero che non ci siano errori) e, solo dopo effettua il calcolo
 
+        $esito = "OK";      // indica che i dati sono corretti, e si usa per mostrare se il calcolo è riuscito o no nel CSV | e permette di mostrare la card del risultato (nel php)
+
         // Calcolo del risparmio e del prezzo finale
         $risparmio = $prezzo * $sconto / 100;
         $prezzoFinale = $prezzo - $risparmio;
@@ -69,8 +71,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $colore = "#D4EDDA";    // Verde
         }
 
-        $esito = "OK";      // indica che i dati sono corretti, e si usa per mostrare se il calcolo è riuscito o no nel CSV | e permette di mostrare la card del risultato (nel php)
-
 
     } else {    // Questo è il caso in cui almeno uno dei campi contiene un errore
 
@@ -78,6 +78,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $risparmio = "";    // lascia vuoto il risparmio perché nel CSV vogliamo salvare i campi relativi ai risultati vuoti
         $prezzoFinale = "";
         $fascia = "";
+        $colore = "";
     }
 
 
@@ -143,6 +144,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <!-- HTML + PHP (Visualizzazione) -->
 <!-- Questa parte si occupa di mostrare all'utente la pagina web(form) e i risultati dell'elaborazione effettuata nella prima parte(mostrando errori, risultati e storico del CSV) -->
+<!-- Si usa htmlspecialchars() ogni volta che bisogna visualizzare nella pagina HTML un dato che proviene dall'utente -->
 <!DOCTYPE html>
 <html lang="it">
 
@@ -165,7 +167,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                id="prodotto"
                name="prodotto"
                value="<?php echo htmlspecialchars($prodotto); ?>"
-               class="<?php if ($erroreProdotto != "") echo 'errore'; ?>"> 
+               class="<?php if ($erroreProdotto != "") echo 'errore'; ?>"> <!-- class="errore" richiama una regola presente nel CSS: .errore {border: 2px solid #B32D2D;} -->
                 <!-- value="?php echo htmlspecialchars($prodotto); ?" -> serve a mantenere nel campo del form il prodotto che l'utente aveva già inserito
                      ES: Se l'utente inserisce "Computer" -> value="Computer" -->
 
@@ -215,7 +217,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </form>
 
     
-    <!-- Visualizzazione del risultato -->
+    <!-- Visualizzazione del risultato (CARD) -->
     <?php
 
     if ($esito == "OK") {       // controlla se il calcolo è riuscito.
@@ -229,11 +231,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <h2>Risultato</h2>
 
-            <p>Prodotto: <?php echo htmlspecialchars($prodotto); ?></p> <!-- Mostra il nome del prodotto inserito dall'utente | htmlspecialchars() serve a evitare che il testo inserito venga interpretato come codice HTML -->
+            <p>Prodotto: <?php echo htmlspecialchars($prodotto); ?></p>     <!-- Mostra il nome del prodotto inserito dall'utente | htmlspecialchars() serve a evitare che il testo inserito venga interpretato come codice HTML -->
 
             <p>Prezzo iniziale:
-                € <?php echo number_format($prezzo, 2, ",", "."); ?>    <!-- Serve a formattare un numero 
-                                                                        number_format(numero, cifre_decimali, separatore_decimale, separatore_migliaia) -->
+                € <?php echo number_format($prezzo, 2, ",", "."); ?>    <!-- Serve a formattare un numero.
+                                                                        FORMULA GENERALE: number_format(varibile_numero, cifre_decimali, separatore_decimale, separatore_migliaia) -->
             </p>
 
             <p>Risparmio:
@@ -254,7 +256,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     ?>
 
 
-    <!-- Visualizzazione dello storico -->
+    <!-- Visualizzazione dello storico e Realizzazione della Tabella -->
     <h2>Storico dei calcoli</h2>
 
     <?php
@@ -266,9 +268,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $file = fopen("log.csv", "r");      // "R" apre il file per leggerlo
 
         echo "<table border='1' style='margin: 20px auto; border-collapse: collapse;'>";
-        // margin: 20px auto --> centra la tabella e aggiunge un margine.
+        // margin: 20px auto --> aggiunge un margine (sopra e sotto) e centra la tabella (sx e dx).
         // border-collapse: collapse --> unisce i bordi delle celle.
 
+        // SOLO LE INFORMAZIONI PIU' IMPORTANTI VANNO INSERITE NELLA TABELLA
         echo "<tr>
                 <th>Prodotto</th>
                 <th>Prezzo finale</th>
@@ -280,21 +283,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Lettura delle righe del file
         // fgetcsv() legge una riga del file CSV e la restituisce sotto forma di array (05/11/2026,Computer,100,20,OK,80,20,BUONO --> $riga[0], $riga[1], ...)
         // SIGNIFICA: Continua a leggere il file una riga alla volta, finché ci sono righe da leggere
-        while (($riga = fgetcsv($file)) != false) {
+        while (($riga = fgetcsv($file)) != false) {     // quando il file termina, fgetcsv() restituisce false (non null)
 
-            // Visualizzazione dei soli calcoli riusciti
+            // Visualizzazione dei soli calcoli riusciti ( attraverso: if($riga[4] == "OK") )
             if ($riga[0] != "Data" && $riga[4] == "OK") {
-                // $riga[0] != "Data" --> controlla che la riga non sia quella delle intestazioni (Data,Prodotto,Prezzo,Sconto,Esito,...). Quindi questo controllo serve a saltare le intestazioni per mostrare solo i calcoli effettuati (06/11/2026,Computer,100,20,OK,80,20,BUONO,...).
+                // $riga[0] != "Data" --> Controlla che la riga (nel CSV) non sia quella delle intestazioni (Data,Prodotto,Prezzo,Sconto,Esito,...). Quindi questo controllo serve a saltare le intestazioni per mostrare solo i calcoli effettuati (06/11/2026,Computer,100,20,OK,80,20,BUONO,...).
                 //                        senza PHP mostrerebbe anche la prima riga (delle intestazioni) nella tabella dello storico.
-                // $riga[4] == "OK" --> Controlla che il calcolo sia riuscito
+                // $riga[4] == "OK" --> Controlla che il calcolo sia riuscito.
                 // SIGNIFICA: Mostra la riga solamente se non contiene le intestazioni e se il calcolo è riuscito.
 
+                // Se il calcolo è riuscito: 
                 echo "<tr>";
 
-                echo "<td>" . htmlspecialchars($riga[1]) . "</td>";
-                echo "<td>€ " . number_format($riga[5], 2, ",", ".") . "</td>";
-                echo "<td>€ " . number_format($riga[6], 2, ",", ".") . "</td>";
-                echo "<td>" . htmlspecialchars($riga[7]) . "</td>";
+                // Queste quattori istruzioni, servono a inserire i dati letti dal CSV nelle quattro colonne della tabella (HTML) dello storico.
+                echo "<td>" . htmlspecialchars($riga[1]) . "</td>";     // recupera il prodotto dal CSV
+                echo "<td>€ " . number_format($riga[5], 2, ",", ".") . "</td>";     // recupera il prezzo finale, formattandolo
+                echo "<td>€ " . number_format($riga[6], 2, ",", ".") . "</td>";     // recupera il risparmio, formattandolo
+                echo "<td>" . htmlspecialchars($riga[7]) . "</td>";     // recupera la fascia
 
                 echo "</tr>";
             }
@@ -307,7 +312,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     } else {
 
-        echo "<p>Nessun calcolo effettuato.</p>";   // Se il file non esiste "if (file_exists("log.csv"))", viene mostrato il messaggio scritto.
+        echo "<p>Nessun calcolo effettuato.</p>";   // Se il file non esiste "if (file_exists("log.csv"))", viene mostrato il messaggio qui scritto.
         // Si fa perché dobbiamo gestire anche la situazione in cui l'utente apre la pagina per la prima volta e il file log.csv non è ancora stato creato.
 
     }

@@ -1,2 +1,3 @@
 Data,Prodotto,Prezzo,Sconto,Esito,"Prezzo finale",Risparmio,Fascia,Errori
 "05/11/2026 18:22:07",Mozzarella,100,10,OK,90,10,PICCOLO,"  "
+"08/11/2026 12:32:40","Coca Cola",2,20,OK,1.6,0.4,BUONO,"  "
